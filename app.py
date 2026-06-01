@@ -13,7 +13,8 @@ from src.emfer.genAI.scout import ask_scout, scout_answer
 
 st.set_page_config(
     page_title="eMFer",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 footer_bg = base64.b64encode(
