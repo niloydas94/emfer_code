@@ -1,0 +1,1 @@
+BASE_MFAPI_URL = "https://api.mfapi.in/mf"
