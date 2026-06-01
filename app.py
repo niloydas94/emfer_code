@@ -153,12 +153,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-#Importing gemini api key from .env file
-import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 load_dotenv()
-genai.configure(api_key = os.getenv("GEMINI_API_KEY"))
 
 @st.cache_data
 def load_schemes():
