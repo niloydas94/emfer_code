@@ -54,6 +54,17 @@ These notes are not final posts. They should stay simple, specific, and easy to 
 - Dark fintech theming needs careful text contrast, sidebar styling, button states, and background restraint so the app feels premium without hurting readability.
 - User review is important for visual design. Screenshots and subjective reactions are valid feedback loops when tuning theme, spacing, and brand feel.
 
+## Git / GitHub Learnings
+
+- Git tracks project history through commits, which are checkpoints with messages.
+- `A` in VS Code means a file is newly added to Git.
+- `.gitignore` prevents future tracking, but it does not remove files Git already tracks.
+- Generated files like `.DS_Store`, `__pycache__/`, `.pyc`, and `.env` should usually stay out of Git.
+- `git status` shows what changed; `git diff` shows the actual edits.
+- `git add` stages changes, `git commit` saves a checkpoint, and `git push` uploads commits to GitHub.
+- `git pull` downloads GitHub changes before pushing when local and remote histories differ.
+- Private repositories are safer while secrets, notebooks, and deployment setup are still being reviewed.
+
 ## Cool Ideas
 
 - The funds race idea came while sleeping at night and kept me awake because I started imagining different ways to visualize comparative mutual fund performance in eMFer.
