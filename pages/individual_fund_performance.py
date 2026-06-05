@@ -13,7 +13,24 @@ if "selected_funds" not in st.session_state or not st.session_state.selected_fun
     if st.button("← Go Back"):
         st.switch_page("app.py")
 else:
-    st.info("Open the left sidebar to check or uncheck individual funds shown on this page.")
+    st.info("Select one or more funds below to view their individual performance.")
+
+    st.markdown(
+        """
+        <style>
+            div.st-key-fund_selector {
+                position: fixed;
+                top: 4rem;
+                left: 18rem;
+                right: 2rem;
+                z-index: 999;
+                background: rgba(5, 6, 10, 0.96);
+                padding: 0.75rem 0;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
     selected_funds = st.session_state.selected_funds
     n_years = st.session_state.get("n_years", 1)
@@ -22,17 +39,21 @@ else:
     df_rolling_all = st.session_state.df_rolling_all
     summary_all_display = st.session_state.summary_all_display
 
-
-    with st.sidebar:
-        st.header("Choose fund(s)")
+    with st.container(key="fund_selector"):
+        st.write("### Choose fund(s)")
         funds_to_display = []
+        fund_cols = st.columns(len(selected_funds))
 
         for idx, fund in enumerate(selected_funds):
-            checked = st.checkbox(fund, value=(idx == 0), key=f"display_fund_{idx}")
+            with fund_cols[idx]:
+                checked = st.checkbox(fund, value=(idx == 0), key=f"display_fund_{idx}")
 
             if checked:
                 funds_to_display.append(fund)
 
+    st.write("")
+    st.write("")
+    st.write("")
     st.divider()
 
     if not funds_to_display:
@@ -44,7 +65,7 @@ else:
 
         for idx, row in display_funds_df.iterrows():
             st.subheader(f"{row['schemeName']} ({row['schemeCode']})")
-            
+
             nav_history_fund = nav_history_all[nav_history_all['fund_name'] == row['schemeName']]
             df_rolling_fund = df_rolling_all[df_rolling_all['fund_name'] == row['schemeName']]
             summary_fund_display = summary_all_display[summary_all_display['Fund Name'] == row['schemeName']]
@@ -65,9 +86,9 @@ else:
                     )
                 }
             )
-            
+
             st.divider()
-    
+
     back_col, compare_col = st.columns(2)
 
     with back_col:

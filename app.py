@@ -162,8 +162,71 @@ load_dotenv()
 def load_schemes():
     return get_all_schemes()
 
+@st.dialog(" 📈 Welcome to eMFer (Empirical Mutual Fund Evaluation & Research)", width="large")
+def show_welcome_message():
+    st.markdown(
+        """
+        ### 📊 Smarter investment decisions start here!
+
+        eMFer helps you look beyond simple 1 year, 3 year,  5 year returns.
+
+        Instead of asking only **"How much did this fund return?"**, eMFer helps you ask:
+
+        **"How consistently did this fund perform across different market periods?"**
+        """
+    )
+
+    st.markdown(
+        """
+        **Choose one or more mutual funds from the entire universe of mutual funds, then select your rolling return window.**
+
+        eMFer will do the heavy lifting: fetch the data, calculate rolling returns, 
+        show useful charts.
+        
+        ## ✨ Signature Experiences
+
+        ### 🏁 eMFer Funds Marathon
+        Watch selected funds race through time.
+
+        ### 🤖 Ask Scout
+        Your AI research assistant for explaining fund performance, comparing funds, and interpreting risk-return patterns in simple language.
+        """
+    )
+
+    with st.expander("Learn more"):
+        st.markdown(
+            """
+            With eMFer, you can explore:
+
+            - **Historical NAV trends** to understand long-term fund movement
+            - **Rolling CAGR performance** to evaluate consistency over time
+            - **Volatility and downside behavior** to understand risk
+            - **Multi-fund comparison** to compare funds side by side
+            - **Boxplot distribution** to see the range of return outcomes
+            - **Risk-return matrix** to understand fund positioning
+            - **Scout AI assistant** to explain fund performance in simple language
+            """
+        )
+
+    st.info(
+        "eMFer is meant for research and "
+        "learning only, not buy, sell, or investment recommendations. \n\n"
+        "Please use your discretion and/or consult a financial advisor " 
+        "before making any investment decisions."
+    )
+
+    if st.button("Get started"):
+        st.session_state.welcome_seen = True
+        st.rerun()
+
 def home_page():
     st.image("assets/brand_logos/emfer_full_lockup_transparent.png", width=560)
+
+    if "welcome_seen" not in st.session_state:
+        st.session_state.welcome_seen = False
+
+    if not st.session_state.welcome_seen:
+        show_welcome_message()
 
     try:
         st.session_state.schemes = load_schemes()
