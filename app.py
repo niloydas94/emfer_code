@@ -270,74 +270,75 @@ def home_page():
         st.dataframe(selected_funds_display)
         st.divider()
 
-        st.session_state.selected_funds_df = st.session_state.schemes[
-            st.session_state.schemes["schemeName"].isin(
-                st.session_state.selected_funds)].reset_index(drop=True)
-        
-        st.session_state.nav_history_all = pd.DataFrame()
-        st.session_state.df_rolling_all = pd.DataFrame()
-        st.session_state.summary_all = pd.DataFrame()
-
-        for idx, row in st.session_state.selected_funds_df.iterrows():
-            #Creating historical NAV history and rolling returns data for each selected fund and appending to session state variables
-            st.session_state.nav_history, tmp = fetch_nav_history(row["schemeCode"])
-
-            fund_start_date = st.session_state.nav_history["date"].min()
-            fund_end_date = st.session_state.nav_history["date"].max()
-            fund_age_years = (fund_end_date - fund_start_date).days / 365.25
-
-            if fund_age_years < st.session_state.n_years:
-                st.error(
-                    f"{row['schemeName']} has only {fund_age_years:.1f} years of NAV history. "
-                    f"Please choose a rolling return window below {fund_age_years:.1f} years or pick a different fund."
-                )
-                st.stop()
-
-            st.session_state.df_rolling = calculate_rolling_returns(st.session_state.nav_history, st.session_state.n_years)
-            st.session_state.summary = rolling_returns_summary(st.session_state.df_rolling, st.session_state.n_years)
+        with st.spinner("eMFer is preparing your mutual fund research workspace..."):
+            st.session_state.selected_funds_df = st.session_state.schemes[
+                st.session_state.schemes["schemeName"].isin(
+                    st.session_state.selected_funds)].reset_index(drop=True)
             
-            #Appending all nav history data
-            st.session_state.nav_history['fund_name'] = row['schemeName']
-            st.session_state.nav_history_all = pd.concat([st.session_state.nav_history_all, st.session_state.nav_history])
+            st.session_state.nav_history_all = pd.DataFrame()
+            st.session_state.df_rolling_all = pd.DataFrame()
+            st.session_state.summary_all = pd.DataFrame()
 
-            #Appending all rolling returns data
-            st.session_state.df_rolling_all = pd.concat([st.session_state.df_rolling_all, st.session_state.df_rolling])
-            
-            # Appending rolling returns summary data
-            st.session_state.summary_all = pd.concat([st.session_state.summary_all, st.session_state.summary]).reset_index(drop=True)
-            st.session_state.summary_all_display = st.session_state.summary_all.rename(columns={
-                "fund_name": "Fund Name",
-                "start_date": "Start Date",
-                "end_date": "End Date",
-                "metric": "Metric",
-                f"latest_{st.session_state.n_years}_year_cagr": f"Latest {st.session_state.n_years}Y CAGR (%)",
-                "mean": "Average CAGR (%)",
-                "std_dev": "Volatility / Std Dev (%)",
-                "min": "Worst Observed CAGR (%)",
-                "p5": "5th Percentile CAGR (%)",
-                "p10": "10th Percentile CAGR (%)",
-                "p25": "25th Percentile CAGR (%)",
-                "median": "Median CAGR (%)",
-                "p75": "75th Percentile CAGR (%)",
-                "p90": "90th Percentile CAGR (%)",
-                "p95": "95th Percentile CAGR (%)",
-                "max": "Best Observed CAGR (%)",
-            })
+            for idx, row in st.session_state.selected_funds_df.iterrows():
+                #Creating historical NAV history and rolling returns data for each selected fund and appending to session state variables
+                st.session_state.nav_history, tmp = fetch_nav_history(row["schemeCode"])
 
-            # Creating fund store for RAG context
-            st.session_state.fund_store = create_fund_store(st.session_state.df_rolling_all, st.session_state.summary_all)
+                fund_start_date = st.session_state.nav_history["date"].min()
+                fund_end_date = st.session_state.nav_history["date"].max()
+                fund_age_years = (fund_end_date - fund_start_date).days / 365.25
 
-            # Building RAG context
-            st.session_state.rag_context = build_rag_context(st.session_state.fund_store)
+                if fund_age_years < st.session_state.n_years:
+                    st.error(
+                        f"{row['schemeName']} has only {fund_age_years:.1f} years of NAV history. "
+                        f"Please choose a rolling return window below {fund_age_years:.1f} years or pick a different fund."
+                    )
+                    st.stop()
 
-            # Creating system instruction for Scout
-            st.session_state.sys_instruction = system_instruction(st.session_state.rag_context)
+                st.session_state.df_rolling = calculate_rolling_returns(st.session_state.nav_history, st.session_state.n_years)
+                st.session_state.summary = rolling_returns_summary(st.session_state.df_rolling, st.session_state.n_years)
+                
+                #Appending all nav history data
+                st.session_state.nav_history['fund_name'] = row['schemeName']
+                st.session_state.nav_history_all = pd.concat([st.session_state.nav_history_all, st.session_state.nav_history])
 
-            # Initializing Scout model with system instruction
-            st.session_state.model = ask_scout(st.session_state.sys_instruction)
+                #Appending all rolling returns data
+                st.session_state.df_rolling_all = pd.concat([st.session_state.df_rolling_all, st.session_state.df_rolling])
+                
+                # Appending rolling returns summary data
+                st.session_state.summary_all = pd.concat([st.session_state.summary_all, st.session_state.summary]).reset_index(drop=True)
+                st.session_state.summary_all_display = st.session_state.summary_all.rename(columns={
+                    "fund_name": "Fund Name",
+                    "start_date": "Start Date",
+                    "end_date": "End Date",
+                    "metric": "Metric",
+                    f"latest_{st.session_state.n_years}_year_cagr": f"Latest {st.session_state.n_years}Y CAGR (%)",
+                    "mean": "Average CAGR (%)",
+                    "std_dev": "Volatility / Std Dev (%)",
+                    "min": "Worst Observed CAGR (%)",
+                    "p5": "5th Percentile CAGR (%)",
+                    "p10": "10th Percentile CAGR (%)",
+                    "p25": "25th Percentile CAGR (%)",
+                    "median": "Median CAGR (%)",
+                    "p75": "75th Percentile CAGR (%)",
+                    "p90": "90th Percentile CAGR (%)",
+                    "p95": "95th Percentile CAGR (%)",
+                    "max": "Best Observed CAGR (%)",
+                })
 
-            # Importing question bank
-            st.session_state.ques_bank = ques_bank()
+                # Creating fund store for RAG context
+                st.session_state.fund_store = create_fund_store(st.session_state.df_rolling_all, st.session_state.summary_all)
+
+                # Building RAG context
+                st.session_state.rag_context = build_rag_context(st.session_state.fund_store)
+
+                # Creating system instruction for Scout
+                st.session_state.sys_instruction = system_instruction(st.session_state.rag_context)
+
+                # Initializing Scout model with system instruction
+                st.session_state.model = ask_scout(st.session_state.sys_instruction)
+
+                # Importing question bank
+                st.session_state.ques_bank = ques_bank()
         
         if st.button("Proceed", key="proceed_button"):
             st.switch_page("pages/individual_fund_performance.py")
