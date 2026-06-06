@@ -5,6 +5,13 @@ from IPython.display import display, clear_output
 import pandas as pd
 import plotly.express as px
 
+def get_fund_colors(funds):
+    colors = px.colors.qualitative.Plotly
+    return {
+        fund: colors[idx % len(colors)]
+        for idx, fund in enumerate(sorted(funds))
+    }
+
 # Plot NAV over time
 def plot_nav(df):
     fig = go.Figure()
@@ -56,6 +63,7 @@ def plot_rolling_cagr_mul_mf(df, n):
     else:
       col_cagr = f'cagr_{n}_years'
       fig = go.Figure()
+      fund_colors = get_fund_colors(df['fund_name'].unique())
 
       # Loop over each fund
       for fund in df['fund_name'].unique():
@@ -66,6 +74,7 @@ def plot_rolling_cagr_mul_mf(df, n):
               y=fund_df[col_cagr],
               mode='lines',
               name=fund,
+              line=dict(color=fund_colors[fund])
           ))
 
       fig.update_layout(
@@ -141,6 +150,7 @@ def plot_boxplot(df, n, sort_by="returns"):
   }
   sort_column, sort_ascending = sort_options.get(sort_by, sort_options["returns"])
   fund_order = stats.sort_values(sort_column, ascending=sort_ascending)["fund"].tolist()
+  fund_colors = get_fund_colors(df["fund"].unique())
 
   fig = px.box(
       df,
@@ -150,7 +160,8 @@ def plot_boxplot(df, n, sort_by="returns"):
       points="outliers",
       title=f"Rolling {n}Y CAGR Distribution Across Funds",
       template="plotly_dark",
-      category_orders={"fund": fund_order}
+      category_orders={"fund": fund_order},
+      color_discrete_map=fund_colors
   )
 
   fig.update_traces(
@@ -216,15 +227,37 @@ def plot_risk_return_matrix(df, n):
 
     x_mid = df[x_col].median()
     y_mid = df[y_col].median()
+    fund_colors = get_fund_colors(df["fund_name"].unique())
+
+    def get_quadrant(row):
+        if row[x_col] <= x_mid and row[y_col] >= y_mid:
+            return "Best Zone"
+        elif row[x_col] > x_mid and row[y_col] >= y_mid:
+            return "Aggressive"
+        elif row[x_col] <= x_mid and row[y_col] < y_mid:
+            return "Stable"
+        else:
+            return "Weak Zone"
+
+    df["quadrant"] = df.apply(get_quadrant, axis=1)
 
     fig = px.scatter(
         df,
         x=x_col,
         y=y_col,
+        color="fund_name",
+        symbol="quadrant",
         text=None,
         hover_name="fund_name",
         title=f"Risk - Return Matrix ({n}Y Rolling CAGR)",
-        template="plotly_dark"
+        template="plotly_dark",
+        color_discrete_map=fund_colors,
+        symbol_map={
+            "Best Zone": "star",
+            "Aggressive": "triangle-up",
+            "Stable": "line-ew",
+            "Weak Zone": "x"
+        }
     )
 
     fig.add_vline(x=x_mid, line_dash="dash", line_color="gray")
@@ -248,28 +281,33 @@ def plot_risk_return_matrix(df, n):
     y_top = (y_mid + y_max) / 2
 
     fig.add_annotation(x=x_left, y=y_top,
-                      text="Low Risk<br>High Return<br><b>Best Zone</b>",
+                      text="Low Risk<br>High Return<br><b>⭐ Best Zone</b>",
                       showarrow=False, font=dict(size=10, color="rgba(255,255,255,0.5)"))
 
     fig.add_annotation(x=x_right, y=y_top,
-                      text="High Risk<br>High Return<br><b>Aggressive</b>",
+                      text="High Risk<br>High Return<br><b>🔺 Aggressive Zone</b>",
                       showarrow=False, font=dict(size=10, color="rgba(255,255,255,0.5)"))
 
     fig.add_annotation(x=x_left, y=y_bottom,
-                      text="Low Risk<br>Low Return<br><b>Stable</b>",
+                      text="Low Risk<br>Low Return<br><b>➖ Stable Zone</b>",
                       showarrow=False, font=dict(size=10, color="rgba(255,255,255,0.5)"))
 
     fig.add_annotation(x=x_right, y=y_bottom,
-                      text="High Risk<br>Low Return<br><b>Weak Zone</b>",
+                      text="High Risk<br>Low Return<br><b>❌ Weak Zone</b>",
                       showarrow=False, font=dict(size=10, color="rgba(255,255,255,0.5)"))
 
     fig.update_traces(
         marker=dict(
-            size=8,
+            size=14,
             opacity=0.85,
             line=dict(width=1, color="white")
         )
     )
+
+    for trace in fig.data:
+        if "Stable" in trace.name:
+            trace.marker.line.color = trace.marker.color
+            trace.marker.line.width = 3
 
     fig.update_xaxes(range=[x_min, x_max])
     fig.update_yaxes(range=[y_min, y_max])
@@ -279,7 +317,15 @@ def plot_risk_return_matrix(df, n):
     fig.update_layout(
         xaxis_title="Risk: Volatility of Rolling CAGR",
         yaxis_title="Return: Median Rolling CAGR",
-        showlegend=False
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.22,
+            xanchor="center",
+            x=0.5,
+            title_text="Fund"
+        )
     )
 
     return fig
@@ -312,11 +358,7 @@ def build_bar_chart_race(df, n_years, sample_frequency, max_funds):
 
     frame_dates = sorted(race_df["period"].unique())
 
-    colors = px.colors.qualitative.Plotly
-    fund_colors = {
-        fund: colors[idx % len(colors)]
-        for idx, fund in enumerate(sorted(race_df["fund"].unique()))
-    }
+    fund_colors = get_fund_colors(race_df["fund"].unique())
 
     def get_frame_data(frame_date):
         frame_df = race_df[race_df["period"] == frame_date]
