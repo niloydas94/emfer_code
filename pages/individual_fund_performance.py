@@ -11,7 +11,7 @@ st.title("Individual Fund Performance")
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
     st.error("No funds selected. Please go back and select funds first.")
     if st.button("← Go Back"):
-        st.switch_page("app.py")
+        st.switch_page(st.session_state.home_page_link)
 else:
     selected_funds = st.session_state.selected_funds
     n_years = st.session_state.get("n_years", 1)
@@ -66,7 +66,7 @@ else:
 
     with back_col:
         if st.button("← Go Back", use_container_width=True):
-            st.switch_page("app.py")
+            st.switch_page(st.session_state.home_page_link)
 
     with compare_col:
         if st.button("Compare Funds →", use_container_width=True):

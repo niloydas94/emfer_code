@@ -10,7 +10,7 @@ st.title("Compare Funds")
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
     st.error("No funds selected. Please go back and select funds first.")
     if st.button("← Go Back"):
-        st.switch_page("app.py")
+        st.switch_page(st.session_state.home_page_link)
 else:
     st.write("### Rolling Returns Comparison")
     st.caption(
@@ -72,7 +72,7 @@ else:
 
     with back_col:
         if st.button("← Go Back", use_container_width=True):
-            st.switch_page("app.py")
+            st.switch_page("pages/individual_fund_performance.py")
 
     with marathon_col:
         if st.button("eMFer Funds Marathon →", use_container_width=True):

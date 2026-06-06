@@ -8,7 +8,7 @@ st.image("assets/brand_logos/emfer_funds_marathon_badge_transparent.png", width=
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
     st.error("No funds selected. Please go back and select funds first.")
     if st.button("← Go Back"):
-        st.switch_page("app.py")
+        st.switch_page(st.session_state.home_page_link)
 else:
     st.caption(
         "Watch how the selected funds move through time based on rolling CAGR. "

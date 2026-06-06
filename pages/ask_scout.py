@@ -8,7 +8,7 @@ st.title("Ask Scout")
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
     st.error("No funds selected. Please go back and select funds first.")
     if st.button("← Go Back"):
-        st.switch_page("app.py")
+        st.switch_page(st.session_state.home_page_link)
 else:
     #Creating a chat interface for asking Scout questions and getting answers
     st.write("### Scout is your very own AI mutual fund analyst! \n" \
@@ -43,4 +43,5 @@ else:
         st.write("### Scout:")
         st.write(answer)
 
-        
+    if st.button("← Go Back", use_container_width=True):
+        st.switch_page("pages/compare_funds.py")

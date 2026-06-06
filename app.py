@@ -343,8 +343,11 @@ def home_page():
             st.switch_page("pages/individual_fund_performance.py")
 
 
+home_page_link = st.Page(home_page, title="eMFer Home Page", default=True)
+st.session_state.home_page_link = home_page_link
+
 page = st.navigation([
-    st.Page(home_page, title="eMFer Home Page", default=True),
+    home_page_link,
     st.Page("pages/individual_fund_performance.py", title="Individual Fund Performance"),
     st.Page("pages/compare_funds.py", title="Compare Funds"),
     st.Page("pages/emfer_funds_marathon.py", title="eMFer Funds Marathon"),
