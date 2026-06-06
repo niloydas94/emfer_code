@@ -13,25 +13,6 @@ if "selected_funds" not in st.session_state or not st.session_state.selected_fun
     if st.button("← Go Back"):
         st.switch_page("app.py")
 else:
-    st.info("Select one or more funds below to view their individual performance.")
-
-    st.markdown(
-        """
-        <style>
-            div.st-key-fund_selector {
-                position: fixed;
-                top: 4rem;
-                left: 18rem;
-                right: 2rem;
-                z-index: 999;
-                background: rgba(5, 6, 10, 0.96);
-                padding: 0.75rem 0;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
     selected_funds = st.session_state.selected_funds
     n_years = st.session_state.get("n_years", 1)
     selected_funds_df = st.session_state.selected_funds_df
@@ -39,21 +20,13 @@ else:
     df_rolling_all = st.session_state.df_rolling_all
     summary_all_display = st.session_state.summary_all_display
 
-    with st.container(key="fund_selector"):
-        st.write("### Choose fund(s)")
-        funds_to_display = []
-        fund_cols = st.columns(len(selected_funds))
+    funds_to_display = st.pills(
+        "Pick fund(s) to review performance",
+        options=selected_funds,
+        selection_mode="multi",
+        default=[],
+    )
 
-        for idx, fund in enumerate(selected_funds):
-            with fund_cols[idx]:
-                checked = st.checkbox(fund, value=(idx == 0), key=f"display_fund_{idx}")
-
-            if checked:
-                funds_to_display.append(fund)
-
-    st.write("")
-    st.write("")
-    st.write("")
     st.divider()
 
     if not funds_to_display:
