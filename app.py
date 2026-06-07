@@ -137,6 +137,28 @@ st.markdown(
             color: white;
         }
 
+        div.st-key-about_us_link {
+            text-align: right;
+            margin-top: 1.5rem;
+        }
+
+        div.st-key-about_us_link div[data-testid="stButton"] > button {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            color: var(--emfer-magenta);
+            font-weight: 700;
+            padding: 0;
+            text-decoration: none;
+        }
+
+        div.st-key-about_us_link div[data-testid="stButton"] > button:hover {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            color: white;
+        }
+
         div[data-testid="stSelectbox"],
         div[data-testid="stMultiSelect"],
         div[data-testid="stSlider"] {
@@ -162,7 +184,11 @@ load_dotenv()
 def load_schemes():
     return get_all_schemes()
 
-@st.dialog(" 📈 Welcome to eMFer (Empirical Mutual Fund Evaluation & Research)", width="large")
+@st.dialog(
+    " 📈 Welcome to eMFer (Empirical Mutual Fund Evaluation & Research)",
+    width="large",
+    dismissible=False
+)
 def show_welcome_message():
     st.markdown(
         """
@@ -170,28 +196,57 @@ def show_welcome_message():
 
         eMFer helps you look beyond simple 1 year, 3 year,  5 year returns.
 
-        Instead of asking only **"How much did this fund return?"**, eMFer helps you ask:
-
-        **"How consistently did this fund perform across different market periods?"**
+        Instead of asking only **"How much did this fund return?"**, eMFer helps you ask:  
+        **"How consistently did this fund perform across different market periods?"**  
+        **"How does this fund compare to its peers across multiple dimensions?"**  
+        **"What is the risk-return profile of this fund?"**  
+        and much more...
         """
     )
 
     st.markdown(
         """
-        **Choose one or more mutual funds from the entire universe of mutual funds, then select your rolling return window.**
-
-        eMFer will do the heavy lifting: fetch the data, calculate rolling returns, 
-        show useful charts.
+        **Choose one or more mutual funds from the entire universe of mutual funds, then select your analysis window.**  
+        eMFer will do the heavy lifting and provide decisioning insights.
         
-        ## ✨ Signature Experiences
+        ## What we offer:
+        ### 📈 Historical NAV Trends
+        See how the fund's NAV has evolved over time.
+
+        ### 🎢 Rolling CAGR Performance
+        Evaluate how the fund's returns have varied across rolling time periods.
+
+        ### 🆚 Comparative Analysis
+        Compare multiple funds side by side across key performance metrics.
+
+        ### 📊 Risk-Return Matrix
+        Understand the fund's risk-return profile and how it stacks up against peers.
 
         ### 🏁 eMFer Funds Marathon
         Watch selected funds race through time.
 
         ### 🤖 Ask Scout
-        Your AI research assistant for explaining fund performance, comparing funds, and interpreting risk-return patterns in simple language.
+        Your AI research assistant for explaining fund performance, comparing funds, and interpreting risk-return patterns in simple language.  
+        
         """
     )
+
+    with st.expander("About the creator"):
+        st.markdown(
+            """
+            Hi, I am **Niloy**, the creator of eMFer.
+
+            I built this platform to make mutual fund analysis easier to understand for everyday investors like me.
+
+            A bit about my self: I started my investing journey back in 2018 without much guidance. Like many first time investors, I had to fumble, make mistakes, learn from them, and slowly correct my approach.
+
+            Over time, I wished there was one simple place that could help me understand mutual fund performance without making the process feel overwhelming.
+
+            eMFer is both a product and a learning journey. It combines my interest in investing, data analytics, and Generative AI.
+
+            It is also an amalgamation of the tools, ideas, and analysis methods that helped me make better investing decisions, built with the hope that it can help someone else make smarter, performance based decisions too.
+            """
+        )
 
     with st.expander("Learn more"):
         st.markdown(
@@ -208,6 +263,52 @@ def show_welcome_message():
             """
         )
 
+    with st.expander("Who should use eMFer?"):
+        st.markdown(
+            """
+            eMFer is built for curious mutual fund investors who want to go beyond simple return numbers.
+
+            It is useful if you:
+
+            - want to compare funds using historical behavior, not just latest returns
+            - care about consistency, volatility, and downside protection
+            - are learning how mutual fund analysis works
+            - want Scout to explain fund performance in simple language
+
+            Before you start, you should have:
+
+            - one or more mutual funds in mind
+            - a rough investment horizon
+            - basic comfort with reading charts and summaries
+            - the understanding that eMFer is a research tool, not financial advice
+            """
+        )
+
+    with st.expander("Use Case Scenarios"):
+        st.markdown(
+            """
+            You can use eMFer to explore questions like:
+
+            - **Compare funds within the same category**  
+              For example, compare small cap, mid cap, large cap, flexi cap, ELSS, or index funds to identify stronger historical performers.
+
+            - **Find category wise leaders**  
+              Study which funds have shown better rolling return consistency, lower volatility, and stronger downside behavior within a chosen category.
+
+            - **Compare different fund categories**  
+              For example, compare small cap funds with mid cap or large cap funds to understand how return potential and volatility differ.
+
+            - **Compare index funds or benchmarks**  
+              For example, compare a small cap index fund with a mid cap index fund, large cap index fund, or broad market index fund.
+
+            - **Compare national or global market indexes**  
+              For example, compare Nifty-based funds with Nasdaq-based or other international index funds, wherever NAV history is available.
+
+            - **Shortlist funds for deeper research**  
+              Use rolling CAGR, boxplots, the risk-return matrix, and Scout to make smarter investment decisions.
+            """
+        )
+
     st.info(
         "eMFer is meant for research and "
         "learning only, not buy, sell, or investment recommendations. \n\n"
@@ -220,6 +321,13 @@ def show_welcome_message():
         st.rerun()
 
 def home_page():
+    spacer_col, about_col = st.columns([6, 1])
+
+    with about_col:
+        with st.container(key="about_us_link"):
+            if st.button("ℹ"):
+                show_welcome_message()
+
     st.image("assets/brand_logos/emfer_full_lockup_transparent.png", width=560)
 
     if "welcome_seen" not in st.session_state:

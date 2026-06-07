@@ -60,9 +60,15 @@ else:
     st.divider()
 
     st.write("### Risk-Return Matrix")
-    st.caption(
-        "This chart compares median rolling return against volatility. The ideal area is "
-        "higher return with lower risk, but always check whether the comparison is fair."
+    st.markdown(
+        """
+        This matrix helps you read return and risk together. Look for funds that suit your risk appetite.<br><br>
+        ⭐ Best Zone: higher rolling returns with lower volatility.<br>
+        🔺 Aggressive Zone: higher rolling returns, but with higher volatility.<br>
+        ➖ Stable Zone: lower volatility, but also lower rolling returns.<br>
+        ❌ Weak Zone: lower rolling returns with higher volatility.
+        """,
+        unsafe_allow_html=True
     )
     st.plotly_chart(
         plot_risk_return_matrix(st.session_state.summary_all, st.session_state.n_years),
