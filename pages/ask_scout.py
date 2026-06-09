@@ -3,6 +3,7 @@ import pandas as pd
 import random
 import time
 import threading
+from langchain_core.messages import AIMessage, HumanMessage
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
 import src.emfer.genAI.scout as scout
@@ -27,11 +28,20 @@ scout_loading_nuggets = [
     "🧩 The risk-return matrix helps separate steady performers from thrill seekers.",
 ]
 
+def use_sample_question():
+    if st.session_state.sample_question:
+        st.session_state.user_question = st.session_state.sample_question
+
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
     st.error("No funds selected. Please go back and select funds first.")
     if st.button("← Go Back"):
         st.switch_page(st.session_state.home_page_link)
 else:
+    if "scout_messages" not in st.session_state:
+        st.session_state.scout_messages = []
+    if "scout_latest_response" not in st.session_state:
+        st.session_state.scout_latest_response = None
+
     #Creating a chat interface for asking Scout questions and getting answers
     st.write("### Scout is your very own AI mutual fund analyst! \n" \
     "Ask anything about the funds you've selected, and it will provide insights based on historical data. \n" \
@@ -40,16 +50,16 @@ else:
     question_selectbox = st.selectbox(
         "Or select a sample question from the dropdown below:",
         st.session_state.ques_bank,
-        key="sample_question"
+        key="sample_question",
+        on_change=use_sample_question
     )
 
-    if st.session_state.sample_question:
-        st.session_state.user_question = st.session_state.sample_question
-
-    question = st.text_input(
-        "Enter your question for Scout here:",
-        key="user_question"
-    )
+    with st.form("ask_scout_form"):
+        question = st.text_input(
+            "Enter your question for Scout here:",
+            key="user_question"
+        )
+        ask_scout_clicked = st.form_submit_button("Ask Scout")
 
     #Creating a drop down of sample questions from the question bank to inspire users
     # question_selectbox = st.selectbox(
@@ -57,15 +67,27 @@ else:
     #     st.session_state.ques_bank)
 
     # question = st.text_input("Enter your question for Scout here:")
-    if st.button("Ask Scout", key="ask_scout_button"):    
+    if ask_scout_clicked:    
         nugget_box = st.empty()
+        chat_history = []
+
+        for message in st.session_state.scout_messages:
+            if message["role"] == "user":
+                chat_history.append(HumanMessage(content=message["content"]))
+            else:
+                chat_history.append(AIMessage(content=message["content"]))
 
         with st.spinner("Scout is thinking through your question..."):
             scout_result = {}
 
             def get_scout_answer():
                 try:
-                    scout_result["answer"] = scout.scout_answer(st.session_state.model, question)
+                    scout_result["answer"] = scout.scout_answer(
+                        st.session_state.model,
+                        question,
+                        chat_history
+                    )
+                    scout_result["fig"] = scout.latest_fig
                 except Exception as error:
                     scout_result["error"] = error
 
@@ -104,12 +126,58 @@ else:
             answer = scout_result["answer"]
 
         nugget_box.empty()
-
-        if scout.latest_fig is not None:
-            st.plotly_chart(scout.latest_fig, use_container_width=True)
         
-        st.write("### Scout:")
-        st.write(answer)
+        st.session_state.scout_messages.append({
+            "role": "user",
+            "content": question
+        })
+        st.session_state.scout_messages.append({
+            "role": "assistant",
+            "content": answer,
+            "fig": scout_result.get("fig")
+        })
+        st.session_state.scout_latest_response = {
+            "question": question,
+            "answer": answer,
+            "fig": scout_result.get("fig")
+        }
+
+    st.divider()
+
+    if st.session_state.scout_latest_response is not None:
+        latest_response = st.session_state.scout_latest_response
+        st.write("### Latest Scout Response")
+        st.write(f"**You:** {latest_response['question']}")
+        st.write(f"**Scout:** {latest_response['answer']}")
+
+        if latest_response.get("fig") is not None:
+            st.plotly_chart(
+                latest_response["fig"],
+                use_container_width=True,
+                key="scout_latest_chart"
+            )
+
+        st.divider()
+
+    st.write("### Chat History")
+    history_messages = st.session_state.scout_messages
+    if st.session_state.scout_latest_response is not None:
+        history_messages = st.session_state.scout_messages[:-2]
+
+    if not history_messages:
+        st.caption("Your conversation with Scout will appear here.")
+
+    for idx, message in enumerate(history_messages):
+        if message["role"] == "user":
+            st.write(f"**You:** {message['content']}")
+        else:
+            st.write(f"**Scout:** {message['content']}")
+            if message.get("fig") is not None:
+                st.plotly_chart(
+                    message["fig"],
+                    use_container_width=True,
+                    key=f"scout_history_chart_{idx}"
+                )
 
     if st.button("← Go Back", use_container_width=True):
         st.switch_page("pages/compare_funds.py")

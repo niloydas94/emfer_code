@@ -26,6 +26,7 @@ def ask_scout(sys_instruction):
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", sys_instruction),
+        MessagesPlaceholder("chat_history"),
         ("human", "{input}"),
         MessagesPlaceholder("agent_scratchpad")
     ])
@@ -40,11 +41,17 @@ def ask_scout(sys_instruction):
 
 #%%
 #Scout generates answers
-def scout_answer(model, question):
+def scout_answer(model, question, chat_history=None):
     global latest_fig
     latest_fig = None
 
-    response = model.invoke({"input": question})
+    if chat_history is None:
+        chat_history = []
+
+    response = model.invoke({
+        "input": question,
+        "chat_history": chat_history
+    })
     return response["output"]
 
 
