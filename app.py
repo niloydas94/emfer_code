@@ -216,6 +216,9 @@ def show_welcome_message():
         ### 🎢 Rolling CAGR Performance
         Evaluate how the fund's returns have varied across rolling time periods.
 
+        ### 💰 SIP / Lumpsum Returns
+        See how a monthly SIP or one-time lumpsum investment would have grown across selected funds.
+
         ### 🆚 Comparative Analysis
         Compare multiple funds side by side across key performance metrics.
 
@@ -351,9 +354,11 @@ def home_page():
     if "n_years" not in st.session_state:
         st.session_state.n_years = 1
 
+    schemes_unique = st.session_state.schemes.drop_duplicates(subset="schemeName")
+
     st.session_state.selected_funds = st.multiselect(
         "Select Mutual Fund(s)",
-        options=st.session_state.schemes["schemeName"].sort_values().tolist(),
+        options=schemes_unique["schemeName"].sort_values().tolist(),
         default=st.session_state.selected_funds,
         placeholder="Start typing fund name...",
         key="selected_funds_input"
@@ -379,8 +384,8 @@ def home_page():
         st.divider()
 
         with st.spinner("eMFer is preparing your mutual fund research workspace..."):
-            st.session_state.selected_funds_df = st.session_state.schemes[
-                st.session_state.schemes["schemeName"].isin(
+            st.session_state.selected_funds_df = schemes_unique[
+                schemes_unique["schemeName"].isin(
                     st.session_state.selected_funds)].reset_index(drop=True)
             
             st.session_state.nav_history_all = pd.DataFrame()
@@ -458,6 +463,7 @@ st.session_state.home_page_link = home_page_link
 page = st.navigation([
     home_page_link,
     st.Page("pages/individual_fund_performance.py", title="Individual Fund Performance"),
+    st.Page("pages/sip_lumpsum_returns.py", title="SIP / Lumpsum Returns"),
     st.Page("pages/compare_funds.py", title="Compare Funds"),
     st.Page("pages/emfer_funds_marathon.py", title="eMFer Funds Marathon"),
     st.Page("pages/ask_scout.py", title="Ask Scout"),

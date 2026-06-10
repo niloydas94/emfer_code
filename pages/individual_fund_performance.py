@@ -62,12 +62,12 @@ else:
 
             st.divider()
 
-    back_col, compare_col = st.columns(2)
+    back_col, sip_lumpsum_col = st.columns(2)
 
     with back_col:
         if st.button("← Go Back", use_container_width=True):
             st.switch_page(st.session_state.home_page_link)
 
-    with compare_col:
-        if st.button("Compare Funds →", use_container_width=True):
-            st.switch_page("pages/compare_funds.py")
+    with sip_lumpsum_col:
+        if st.button("SIP / Lumpsum Returns →", use_container_width=True):
+            st.switch_page("pages/sip_lumpsum_returns.py")

@@ -12,6 +12,27 @@ def get_fund_colors(funds):
         for idx, fund in enumerate(sorted(funds))
     }
 
+def format_indian_currency(value):
+    value = round(value)
+    sign = "-" if value < 0 else ""
+    value_text = str(abs(value))
+
+    if len(value_text) <= 3:
+        return f"{sign}₹{value_text}"
+
+    last_three_digits = value_text[-3:]
+    remaining_digits = value_text[:-3]
+    indian_groups = []
+
+    while len(remaining_digits) > 2:
+        indian_groups.insert(0, remaining_digits[-2:])
+        remaining_digits = remaining_digits[:-2]
+
+    if remaining_digits:
+        indian_groups.insert(0, remaining_digits)
+
+    return f"{sign}₹{','.join(indian_groups)},{last_three_digits}"
+
 # Plot NAV over time
 def plot_nav(df):
     fig = go.Figure()
@@ -477,6 +498,61 @@ def build_bar_chart_race(df, n_years, sample_frequency, max_funds):
                 ],
             }
         ]
+    )
+
+    return fig
+
+
+def plot_investment_value_growth(value_history_df, mode):
+    fund_colors = get_fund_colors(value_history_df["fund_name"].unique())
+
+    fig = go.Figure()
+
+    for fund_name in value_history_df["fund_name"].unique():
+        fund_df = value_history_df[value_history_df["fund_name"] == fund_name]
+        fund_color = fund_colors[fund_name]
+
+        fig.add_trace(go.Scatter(
+            x=fund_df["date"],
+            y=fund_df["investment_value"],
+            customdata=[format_indian_currency(value) for value in fund_df["investment_value"]],
+            mode="lines",
+            name=f"{fund_name} - Current Value",
+            line=dict(color=fund_color),
+            hovertemplate=(
+                "<b>%{fullData.name}</b><br>"
+                "Date: %{x|%d %b %Y}<br>"
+                "Value: %{customdata}<extra></extra>"
+            )
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=fund_df["date"],
+            y=fund_df["total_invested"],
+            customdata=[format_indian_currency(value) for value in fund_df["total_invested"]],
+            mode="lines",
+            name=f"{fund_name} - Invested Value",
+            line=dict(color=fund_color, dash="dash"),
+            hovertemplate=(
+                "<b>%{fullData.name}</b><br>"
+                "Date: %{x|%d %b %Y}<br>"
+                "Value: %{customdata}<extra></extra>"
+            )
+        ))
+
+    fig.update_layout(
+        title=f"{mode} Investment Value Over Time",
+        template="plotly_dark",
+        xaxis_title="Date",
+        yaxis_title="Investment Value",
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.25,
+            xanchor="center",
+            x=0.5,
+            title_text="Fund"
+        )
     )
 
     return fig

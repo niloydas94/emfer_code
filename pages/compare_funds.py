@@ -78,7 +78,7 @@ else:
 
     with back_col:
         if st.button("← Go Back", use_container_width=True):
-            st.switch_page("pages/individual_fund_performance.py")
+            st.switch_page("pages/sip_lumpsum_returns.py")
 
     with marathon_col:
         if st.button("eMFer Funds Marathon →", use_container_width=True):
