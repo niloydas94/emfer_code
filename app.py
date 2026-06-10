@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import base64
 from pathlib import Path
+import streamlit.components.v1 as components
 
 from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history
 from src.emfer.data.rolling_returns import calculate_rolling_returns, get_nearest_past_index, clean_fund_name
@@ -190,6 +191,20 @@ def load_schemes():
     dismissible=False
 )
 def show_welcome_message():
+    components.html(
+        """
+        <script>
+            setTimeout(() => {
+                const dialog = window.parent.document.querySelector('div[role="dialog"]');
+                if (dialog) {
+                    dialog.scrollTop = 0;
+                }
+            }, 100);
+        </script>
+        """,
+        height=0
+    )
+
     st.markdown(
         """
         ### 📊 Smarter investment decisions start here!
