@@ -30,3 +30,18 @@ def fetch_nav_history(mf_scheme_code):
     return df, fund_name
 
 
+def detect_nav_anomalies(nav_history):
+    nav_history = nav_history.sort_values("date").copy()
+    nav_history["previous_nav"] = nav_history["nav"].shift(1)
+    nav_history["nav_ratio"] = nav_history["nav"] / nav_history["previous_nav"]
+
+    anomaly_rows = nav_history[
+        (nav_history["previous_nav"] > 0)
+        & (
+            (nav_history["nav_ratio"] <= 0.20)
+            | (nav_history["nav_ratio"] >= 5)
+        )
+    ]
+
+    return anomaly_rows[["date", "previous_nav", "nav", "nav_ratio"]].to_dict("records")
+

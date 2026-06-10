@@ -186,7 +186,7 @@ def load_schemes():
     return get_all_schemes()
 
 @st.dialog(
-    "Hello there!",
+    " 📈 Welcome to eMFer (Empirical Mutual Fund Evaluation & Research)",
     width="large",
     dismissible=False
 )
@@ -204,117 +204,6 @@ def show_welcome_message():
         """,
         height=0
     )
-    st.markdown(
-        """
-        <style>
-            div[role="dialog"] {
-                border: 1px solid rgba(138, 43, 255, 0.42);
-                border-radius: 18px;
-                background:
-                    radial-gradient(circle at top left, rgba(11, 124, 255, 0.18), transparent 30%),
-                    radial-gradient(circle at top right, rgba(211, 45, 255, 0.14), transparent 32%),
-                    #080B14;
-                box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
-            }
-
-            div[role="dialog"] h2 {
-                color: #F5F7FB;
-                font-size: 2rem;
-                line-height: 1.15;
-                margin-top: 0.6rem;
-                margin-bottom: 0.35rem;
-            }
-
-            div[role="dialog"] [data-testid="stDialogHeader"] * {
-                font-size: 1.4rem !important;
-                font-weight: 800 !important;
-                color: #F5F7FB !important;
-            }
-
-            .welcome-title {
-                font-size: 2.7rem;
-                line-height: 1.08;
-                font-weight: 900;
-                color: #FFFFFF;
-                margin: 0.2rem 0 0.5rem 0;
-            }
-
-            .welcome-title span {
-                color: #B9C1D3;
-                font-size: 1.15rem;
-                font-weight: 700;
-                display: block;
-                margin-top: 0.45rem;
-            }
-
-            div[role="dialog"] h3 {
-                color: #F5F7FB;
-                font-size: 1.18rem;
-                line-height: 1.25;
-                margin-top: 1rem;
-                margin-bottom: 0.35rem;
-            }
-
-            div[role="dialog"] p {
-                color: #B9C1D3;
-                font-size: 1.02rem;
-                line-height: 1.65;
-            }
-
-            div[role="dialog"] strong {
-                color: #FFFFFF;
-            }
-
-            div[role="dialog"] div[data-testid="stMarkdownContainer"] > div {
-                max-width: 100%;
-            }
-
-            div[role="dialog"] div[data-testid="stExpander"] {
-                border: 1px solid rgba(138, 43, 255, 0.32);
-                border-radius: 12px;
-                background: rgba(11, 15, 26, 0.72);
-                margin-top: 0.75rem;
-            }
-
-            div[role="dialog"] div[data-testid="stExpander"] details summary {
-                font-size: 1rem;
-                font-weight: 700;
-            }
-
-            div[role="dialog"] div[data-testid="stExpander"]:first-of-type {
-                border: 1px solid rgba(11, 124, 255, 0.42);
-                background:
-                    linear-gradient(135deg, rgba(11, 124, 255, 0.12), rgba(138, 43, 255, 0.10)),
-                    rgba(11, 15, 26, 0.86);
-                box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
-            }
-
-            div[role="dialog"] div[data-testid="stAlert"] {
-                border-radius: 14px;
-                border: 1px solid rgba(11, 124, 255, 0.28);
-            }
-
-            div[role="dialog"] div[data-testid="stButton"] > button {
-                min-height: 3rem;
-                padding-left: 1.25rem;
-                padding-right: 1.25rem;
-                border-radius: 12px;
-                font-size: 1rem;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        """
-        <div class="welcome-title">
-            📈 Welcome to e<em>MF</em>er
-            <span>Empirical Mutual Fund Evaluation & Research</span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
     st.markdown(
         """
@@ -330,35 +219,35 @@ def show_welcome_message():
         """
     )
 
-    with st.expander("What we offer", expanded=False):
-        st.markdown(
-            """
-            **Choose one or more mutual funds from the entire universe of mutual funds, then select your analysis window.**  
-            eMFer will do the heavy lifting and provide decisioning insights.
-            
-            ### 📈 Historical NAV Trends
-            See how the fund's NAV has evolved over time.
+    st.markdown(
+        """
+        **Choose one or more mutual funds from the entire universe of mutual funds, then select your analysis window.**  
+        eMFer will do the heavy lifting and provide decisioning insights.
+        
+        ## What we offer:
+        ### 📈 Historical NAV Trends
+        See how the fund's NAV has evolved over time.
 
-            ### 🎢 Rolling CAGR Performance
-            Evaluate how the fund's returns have varied across rolling time periods.
+        ### 🎢 Rolling CAGR Performance
+        Evaluate how the fund's returns have varied across rolling time periods.
 
-            ### 💰 SIP / Lumpsum Returns
-            See how a monthly SIP or one-time lumpsum investment would have grown across selected funds.
+        ### 💰 SIP / Lumpsum Returns
+        See how a monthly SIP or one-time lumpsum investment would have grown across selected funds.
 
-            ### 🆚 Comparative Analysis
-            Compare multiple funds side by side across key performance metrics.
+        ### 🆚 Comparative Analysis
+        Compare multiple funds side by side across key performance metrics.
 
-            ### 📊 Risk-Return Matrix
-            Understand the fund's risk-return profile and how it stacks up against peers.
+        ### 📊 Risk-Return Matrix
+        Understand the fund's risk-return profile and how it stacks up against peers.
 
-            ### 🏁 eMFer Funds Marathon
-            Watch selected funds race through time.
+        ### 🏁 eMFer Funds Marathon
+        Watch selected funds race through time.
 
-            ### 🤖 Ask Scout
-            Your AI research assistant for explaining fund performance, comparing funds, and interpreting risk-return patterns in simple language.  
-            
-            """
-        )
+        ### 🤖 Ask Scout
+        Your AI research assistant for explaining fund performance, comparing funds, and interpreting risk-return patterns in simple language.  
+        
+        """
+    )
 
     with st.expander("About the creator"):
         st.markdown(
