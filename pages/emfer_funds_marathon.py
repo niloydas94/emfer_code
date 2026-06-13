@@ -1,9 +1,14 @@
 import streamlit as st
 
 from src.emfer.charts.charts import build_bar_chart_race
+from src.emfer.analytics import track_event
 
 
 st.image("assets/brand_logos/emfer_funds_marathon_badge_transparent.png", width=620)
+
+if "marathon_page_viewed_tracked" not in st.session_state:
+    track_event("marathon_page_viewed", {"page_name": "eMFer Funds Marathon"})
+    st.session_state.marathon_page_viewed_tracked = True
 
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
     st.error("No funds selected. Please go back and select funds first.")

@@ -6,3 +6,5 @@ ipython
 python-dotenv
 langchain==0.3.27
 langchain-google-genai==2.1.12
+posthog
+streamlit-cookies-manager

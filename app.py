@@ -3,7 +3,14 @@ import pandas as pd
 import requests
 import base64
 from pathlib import Path
+from dotenv import load_dotenv
+import os
 import streamlit.components.v1 as components
+
+try:
+    from streamlit_cookies_manager import EncryptedCookieManager
+except ImportError:
+    EncryptedCookieManager = None
 
 from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history, detect_nav_anomalies
 from src.emfer.data.rolling_returns import calculate_rolling_returns, get_nearest_past_index, clean_fund_name
@@ -11,12 +18,24 @@ from src.emfer.charts.charts import plot_nav, plot_rolling_cagr_mul_mf, rolling_
 from src.emfer.genAI.fund_store import create_fund_store, build_rag_context
 from src.emfer.genAI.prompts import system_instruction, ques_bank
 from src.emfer.genAI.scout import ask_scout, scout_answer
+from src.emfer.analytics import format_funds_for_analytics, initialize_analytics, track_event
+
+load_dotenv()
 
 st.set_page_config(
     page_title="eMFer",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+if EncryptedCookieManager is not None:
+    cookies = EncryptedCookieManager(
+        prefix="emfer/",
+        password=os.getenv("COOKIE_PASSWORD") or st.secrets.get("COOKIE_PASSWORD", "emfer-local-cookie-password")
+    )
+
+    if cookies.ready():
+        initialize_analytics(cookies)
 
 footer_bg = base64.b64encode(
     Path("assets/backgrounds/emfer_data_wave_footer.png").read_bytes()
@@ -176,10 +195,6 @@ st.markdown(
     """.replace("__FOOTER_BG__", footer_bg),
     unsafe_allow_html=True
 )
-
-from dotenv import load_dotenv
-import os
-load_dotenv()
 
 @st.cache_data
 def load_schemes():
@@ -444,7 +459,8 @@ def show_welcome_message():
         "eMFer is meant for research and "
         "learning only, not buy, sell, or investment recommendations. \n\n"
         "Please use your discretion and/or consult a financial advisor " 
-        "before making any investment decisions."
+        "before making any investment decisions. \n\n"
+        "eMFer uses analytics to understand feature usage and improve the product experience."
     )
 
     if st.button("Get started"):
@@ -452,6 +468,10 @@ def show_welcome_message():
         st.rerun()
 
 def home_page():
+    if "home_page_viewed_tracked" not in st.session_state:
+        track_event("home_page_viewed", {"page_name": "Home"})
+        st.session_state.home_page_viewed_tracked = True
+
     spacer_col, about_col = st.columns([6, 1])
 
     with about_col:
@@ -605,6 +625,14 @@ def home_page():
             )
         
         if st.button("Proceed", key="proceed_button"):
+            track_event(
+                "analysis_started",
+                {
+                    "funds_selected": format_funds_for_analytics(st.session_state.selected_funds),
+                    "number_of_funds": len(st.session_state.selected_funds),
+                    "rolling_window_years": st.session_state.n_years,
+                }
+            )
             st.switch_page("pages/individual_fund_performance.py")
 
 

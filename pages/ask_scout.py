@@ -7,8 +7,13 @@ from langchain_core.messages import AIMessage, HumanMessage
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
 import src.emfer.genAI.scout as scout
+from src.emfer.analytics import format_funds_for_analytics, track_event
 
 st.title("Ask Scout")
+
+if "scout_page_viewed_tracked" not in st.session_state:
+    track_event("scout_page_viewed", {"page_name": "Ask Scout"})
+    st.session_state.scout_page_viewed_tracked = True
 
 scout_loading_nuggets = [
     "📈 Rolling returns help you spot consistency, not just one lucky finish-line selfie.",
@@ -126,6 +131,21 @@ else:
             answer = scout_result["answer"]
 
         nugget_box.empty()
+
+        question_source = "question_bank" if question == st.session_state.sample_question else "typed"
+        track_event(
+            "scout_question_asked",
+            {
+                "funds_selected": format_funds_for_analytics(st.session_state.selected_funds),
+                "number_of_funds": len(st.session_state.selected_funds),
+                "rolling_window_years": st.session_state.n_years,
+                "question": question,
+                "answer": answer,
+                "question_source": question_source,
+                "question_length": len(question),
+                "has_chart_response": scout_result.get("fig") is not None,
+            }
+        )
         
         st.session_state.scout_messages.append({
             "role": "user",

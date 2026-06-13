@@ -3,6 +3,7 @@ import pandas as pd
 
 from src.emfer.charts.charts import plot_investment_value_growth
 from src.emfer.data.investment_returns import calculate_lumpsum_returns, calculate_sip_returns
+from src.emfer.analytics import format_funds_for_analytics, track_event
 
 
 def format_indian_currency(value):
@@ -28,6 +29,10 @@ def format_indian_currency(value):
 
 
 st.title("SIP / Lumpsum Returns")
+
+if "sip_lumpsum_page_viewed_tracked" not in st.session_state:
+    track_event("sip_lumpsum_page_viewed", {"page_name": "SIP / Lumpsum Returns"})
+    st.session_state.sip_lumpsum_page_viewed_tracked = True
 
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
     st.error("No funds selected. Please go back and select funds first.")
@@ -95,6 +100,18 @@ else:
     if value_history_df.empty:
         st.info("No funds have enough NAV history for this investment period.")
     else:
+        current_tracking_state = {
+            "investment_mode": investment_mode,
+            "investment_amount": investment_amount,
+            "investment_years": analysis_years,
+            "funds_selected": format_funds_for_analytics(st.session_state.selected_funds),
+            "number_of_funds": len(st.session_state.selected_funds),
+        }
+
+        if current_tracking_state != st.session_state.get("last_tracked_sip_lumpsum_inputs"):
+            track_event("sip_lumpsum_analysis", current_tracking_state)
+            st.session_state.last_tracked_sip_lumpsum_inputs = current_tracking_state
+
         st.write("### Investment Value Over Time")
         st.plotly_chart(
             plot_investment_value_growth(value_history_df, investment_mode),

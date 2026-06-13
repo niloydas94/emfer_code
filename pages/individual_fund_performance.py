@@ -4,8 +4,13 @@ import pandas as pd
 from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history
 from src.emfer.data.rolling_returns import calculate_rolling_returns, get_nearest_past_index, clean_fund_name
 from src.emfer.charts.charts import plot_nav, plot_rolling_cagr_mul_mf, rolling_returns_summary
+from src.emfer.analytics import format_funds_for_analytics, track_event
 
 st.title("Individual Fund Performance")
+
+if "individual_page_viewed_tracked" not in st.session_state:
+    track_event("individual_page_viewed", {"page_name": "Individual Fund Performance"})
+    st.session_state.individual_page_viewed_tracked = True
 
 # Get schemes from session state
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
@@ -26,6 +31,17 @@ else:
         selection_mode="multi",
         default=[],
     )
+
+    if funds_to_display and funds_to_display != st.session_state.get("last_tracked_individual_funds"):
+        track_event(
+            "individual_funds_selected",
+            {
+                "funds_selected": format_funds_for_analytics(funds_to_display),
+                "number_of_funds": len(funds_to_display),
+                "rolling_window_years": n_years,
+            }
+        )
+        st.session_state.last_tracked_individual_funds = funds_to_display
 
     st.divider()
 

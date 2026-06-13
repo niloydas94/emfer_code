@@ -4,8 +4,17 @@ import pandas as pd
 from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history
 from src.emfer.data.rolling_returns import calculate_rolling_returns, get_nearest_past_index
 from src.emfer.charts.charts import plot_nav, plot_rolling_cagr_mul_mf, rolling_returns_summary, plot_boxplot, plot_risk_return_matrix
+from src.emfer.analytics import format_funds_for_analytics, track_event
+
+
+def format_metric_values_for_analytics(values):
+    return " || ".join(f"{value:.2f}" for value in values)
 
 st.title("Compare Funds")
+
+if "compare_page_viewed_tracked" not in st.session_state:
+    track_event("compare_page_viewed", {"page_name": "Compare Funds"})
+    st.session_state.compare_page_viewed_tracked = True
 
 if "selected_funds" not in st.session_state or not st.session_state.selected_funds:
     st.error("No funds selected. Please go back and select funds first.")
@@ -38,6 +47,28 @@ else:
         }
     )
 
+    summary_for_analytics = st.session_state.summary_all_display.sort_values("Fund Name")
+    compare_metrics_state = {
+        "funds_selected": format_funds_for_analytics(summary_for_analytics["Fund Name"].tolist()),
+        "metric": f"{st.session_state.n_years}Y CAGR",
+        "latest_metric_value": format_metric_values_for_analytics(
+            summary_for_analytics[f"Latest {st.session_state.n_years}Y CAGR (%)"]
+        ),
+        "average_metric_value": format_metric_values_for_analytics(
+            summary_for_analytics["Average CAGR (%)"]
+        ),
+        "median_metric_value": format_metric_values_for_analytics(
+            summary_for_analytics["Median CAGR (%)"]
+        ),
+        "std_dev_metric_value": format_metric_values_for_analytics(
+            summary_for_analytics["Volatility / Std Dev (%)"]
+        ),
+    }
+
+    if compare_metrics_state != st.session_state.get("last_tracked_compare_metrics"):
+        track_event("compare_metrics", compare_metrics_state)
+        st.session_state.last_tracked_compare_metrics = compare_metrics_state
+
     st.divider()
 
     st.write("### Distribution of Rolling Returns")
@@ -52,6 +83,7 @@ else:
         index=0,
     )
     sort_by = "returns" if sort_by_label.startswith("Returns") else "spread"
+
     st.plotly_chart(
         plot_boxplot(st.session_state.df_rolling_all, st.session_state.n_years, sort_by),
         use_container_width=True
