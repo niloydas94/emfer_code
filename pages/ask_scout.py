@@ -73,6 +73,7 @@ else:
 
     # question = st.text_input("Enter your question for Scout here:")
     if ask_scout_clicked:    
+        response_start_time = time.time()
         nugget_box = st.empty()
         chat_history = []
 
@@ -93,6 +94,7 @@ else:
                         chat_history
                     )
                     scout_result["fig"] = scout.latest_fig
+                    scout_result["token_usage"] = scout.latest_token_usage
                 except Exception as error:
                     scout_result["error"] = error
 
@@ -126,6 +128,20 @@ else:
             scout_thread.join()
 
             if "error" in scout_result:
+                track_event(
+                    "scout_question_asked",
+                    {
+                        "funds_selected": format_funds_for_analytics(st.session_state.selected_funds),
+                        "number_of_funds": len(st.session_state.selected_funds),
+                        "rolling_window_years": st.session_state.n_years,
+                        "question": question,
+                        "question_source": "question_bank" if question == st.session_state.sample_question else "typed",
+                        "question_length": len(question),
+                        "response_time_seconds": round(time.time() - response_start_time, 2),
+                        "success": False,
+                        "error_message": str(scout_result["error"]),
+                    }
+                )
                 raise scout_result["error"]
 
             answer = scout_result["answer"]
@@ -143,7 +159,11 @@ else:
                 "answer": answer,
                 "question_source": question_source,
                 "question_length": len(question),
+                "answer_length": len(answer),
                 "has_chart_response": scout_result.get("fig") is not None,
+                "response_time_seconds": round(time.time() - response_start_time, 2),
+                "success": True,
+                **scout_result.get("token_usage", {}),
             }
         )
         
