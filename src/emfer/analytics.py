@@ -70,7 +70,8 @@ def get_posthog_client():
 
     return Posthog(
         project_api_key=api_key,
-        host=host
+        host=host,
+        disable_geoip=False
     )
 
 
