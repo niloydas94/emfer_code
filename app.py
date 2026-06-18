@@ -12,7 +12,7 @@ try:
 except ImportError:
     EncryptedCookieManager = None
 
-from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history, detect_nav_anomalies
+from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history, clean_nav_history, detect_nav_anomalies
 from src.emfer.data.rolling_returns import calculate_rolling_returns, get_nearest_past_index, clean_fund_name
 from src.emfer.charts.charts import plot_nav, plot_rolling_cagr_mul_mf, rolling_returns_summary, plot_boxplot
 from src.emfer.genAI.fund_store import create_fund_store, build_rag_context
@@ -540,10 +540,21 @@ def home_page():
             st.session_state.df_rolling_all = pd.DataFrame()
             st.session_state.summary_all = pd.DataFrame()
             st.session_state.nav_anomaly_warnings = []
+            st.session_state.nav_quality_warnings = []
 
             for idx, row in st.session_state.selected_funds_df.iterrows():
                 #Creating historical NAV history and rolling returns data for each selected fund and appending to session state variables
                 st.session_state.nav_history, tmp = fetch_nav_history(row["schemeCode"])
+                st.session_state.nav_history, nav_quality_info = clean_nav_history(st.session_state.nav_history)
+
+                if nav_quality_info["trimmed_start_rows"] > 0 or nav_quality_info["removed_later_rows"] > 0:
+                    st.session_state.nav_quality_warnings.append({
+                        "fund_name": row["schemeName"],
+                        "trimmed_start_rows": nav_quality_info["trimmed_start_rows"],
+                        "removed_later_rows": nav_quality_info["removed_later_rows"],
+                        "effective_start_date": nav_quality_info["effective_start_date"],
+                    })
+
                 nav_anomalies = detect_nav_anomalies(st.session_state.nav_history)
 
                 for anomaly in nav_anomalies:
@@ -621,6 +632,27 @@ def home_page():
             st.warning(
                 "Data quality warning: eMFer detected sudden NAV scale changes in the source data. "
                 "Return calculations for these funds may be misleading unless the NAV series is adjusted.\n\n"
+                f"{warning_text}"
+            )
+
+        if st.session_state.nav_quality_warnings:
+            warning_lines = []
+
+            for warning in st.session_state.nav_quality_warnings:
+                warning_line = (
+                    f"- {warning['fund_name']}: analysis starts from {warning['effective_start_date']} "
+                    f"after trimming {warning['trimmed_start_rows']} invalid starting NAV rows"
+                )
+
+                if warning["removed_later_rows"]:
+                    warning_line += f" and removing {warning['removed_later_rows']} later invalid NAV rows"
+
+                warning_lines.append(f"{warning_line}.")
+
+            warning_text = "\n".join(warning_lines)
+            st.warning(
+                "Data quality warning: eMFer found NAV values less than or equal to zero in the source data. "
+                "Invalid rows were ignored for charts and return calculations.\n\n"
                 f"{warning_text}"
             )
         
