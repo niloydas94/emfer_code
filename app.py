@@ -18,7 +18,14 @@ from src.emfer.charts.charts import plot_nav, plot_rolling_cagr_mul_mf, rolling_
 from src.emfer.genAI.fund_store import create_fund_store, build_rag_context
 from src.emfer.genAI.prompts import system_instruction, ques_bank
 from src.emfer.genAI.scout import ask_scout, scout_answer
-from src.emfer.analytics import format_funds_for_analytics, initialize_analytics, track_event
+from src.emfer.analytics import (
+    format_funds_for_analytics,
+    get_session_id,
+    get_visitor_id,
+    get_visitor_id_source,
+    initialize_analytics,
+    track_event,
+)
 
 load_dotenv()
 
@@ -36,6 +43,53 @@ if EncryptedCookieManager is not None:
 
     if cookies.ready():
         initialize_analytics(cookies)
+
+posthog_api_key = os.getenv("POSTHOG_API_KEY") or st.secrets.get("POSTHOG_API_KEY", None)
+posthog_host = os.getenv("POSTHOG_HOST") or st.secrets.get("POSTHOG_HOST", None)
+analytics_visitor_id = get_visitor_id()
+analytics_session_id = get_session_id()
+analytics_visitor_id_source = get_visitor_id_source()
+
+if posthog_api_key and posthog_host:
+    components.html(
+        f"""
+        <script>
+            !function(t,e){{var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){{function g(t,e){{var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){{t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){{var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}},u.people.toString=function(){{return u.toString(1)+".people (stub)"}},o="init capture identify alias people.set people.set_once register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlagBootstrap loaded".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])}},e.__SV=1)}}(document,window.posthog||[]);
+
+            posthog.init("{posthog_api_key}", {{
+                api_host: "{posthog_host}",
+                person_profiles: "identified_only",
+                capture_pageview: false
+            }});
+
+            const visitorId = "{analytics_visitor_id}";
+            const sessionId = "{analytics_session_id}";
+            const visitorIdSource = "{analytics_visitor_id_source}";
+            posthog.identify(visitorId);
+
+            const pageUrl = window.parent.location.href;
+            const pageTitle = window.parent.document.title || "eMFer";
+            const pageviewKey = "emfer_posthog_pageview_" + pageUrl;
+            const eventTimeIst = new Date().toLocaleString("sv-SE", {{
+                timeZone: "Asia/Kolkata",
+                hour12: false
+            }});
+
+            if (!window.parent.sessionStorage.getItem(pageviewKey)) {{
+                posthog.capture("$pageview", {{
+                    "$current_url": pageUrl,
+                    "$title": pageTitle,
+                    "visitor_id": visitorId,
+                    "session_id": sessionId,
+                    "visitor_id_source": visitorIdSource,
+                    "event_time_ist": eventTimeIst
+                }});
+                window.parent.sessionStorage.setItem(pageviewKey, "true");
+            }}
+        </script>
+        """,
+        height=0
+    )
 
 footer_bg = base64.b64encode(
     Path("assets/backgrounds/emfer_data_wave_footer.png").read_bytes()
