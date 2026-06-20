@@ -67,8 +67,21 @@ if posthog_api_key and posthog_host:
             const visitorIdSource = "{analytics_visitor_id_source}";
             posthog.identify(visitorId);
 
-            const pageUrl = window.parent.location.href;
-            const pageTitle = window.parent.document.title || "eMFer";
+            let realLocation = window.parent.location;
+            let pageTitle = "eMFer";
+
+            try {{
+                realLocation = window.top.location;
+                pageTitle = window.top.document.title || pageTitle;
+            }} catch (error) {{
+                try {{
+                    pageTitle = window.parent.document.title || pageTitle;
+                }} catch (innerError) {{}}
+            }}
+
+            const pageUrl = realLocation.href;
+            const pageHost = realLocation.host;
+            const pagePath = realLocation.pathname;
             const pageviewKey = "emfer_posthog_pageview_" + pageUrl;
             const eventTimeIst = new Date().toLocaleString("sv-SE", {{
                 timeZone: "Asia/Kolkata",
@@ -78,6 +91,8 @@ if posthog_api_key and posthog_host:
             if (!window.parent.sessionStorage.getItem(pageviewKey)) {{
                 posthog.capture("$pageview", {{
                     "$current_url": pageUrl,
+                    "$host": pageHost,
+                    "$pathname": pagePath,
                     "$title": pageTitle,
                     "visitor_id": visitorId,
                     "session_id": sessionId,
