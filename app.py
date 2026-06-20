@@ -35,11 +35,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+WAIT_FOR_ANALYTICS_COOKIES = True
+
 if EncryptedCookieManager is not None:
     cookies = EncryptedCookieManager(
         prefix="emfer/",
         password=os.getenv("COOKIE_PASSWORD") or st.secrets.get("COOKIE_PASSWORD", "emfer-local-cookie-password")
     )
+
+    if not cookies.ready() and WAIT_FOR_ANALYTICS_COOKIES:
+        st.stop()
 
     if cookies.ready():
         initialize_analytics(cookies)
