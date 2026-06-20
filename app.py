@@ -35,7 +35,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-WAIT_FOR_ANALYTICS_COOKIES = True
+WAIT_FOR_ANALYTICS_COOKIES = False
 
 if EncryptedCookieManager is not None:
     cookies = EncryptedCookieManager(
