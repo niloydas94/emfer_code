@@ -56,6 +56,104 @@ def clean_nav_history(nav_history):
     }
 
 
+def add_nav_indicators(nav_history):
+    nav_history = nav_history.copy()
+    nav_history["date"] = pd.to_datetime(nav_history["date"])
+    nav_history["nav"] = pd.to_numeric(nav_history["nav"])
+    sort_columns = ["date"]
+
+    if "fund_name" in nav_history.columns:
+        sort_columns = ["fund_name", "date"]
+
+    nav_history = nav_history.sort_values(sort_columns).reset_index(drop=True)
+    group_columns = ["fund_name"] if "fund_name" in nav_history.columns else None
+
+    if group_columns:
+        nav_groups = nav_history.groupby(group_columns, group_keys=False)["nav"]
+        nav_history["ma_50"] = nav_groups.transform(lambda nav: nav.rolling(window=50).mean())
+        nav_history["ma_200"] = nav_groups.transform(lambda nav: nav.rolling(window=200).mean())
+        nav_history["drawdown_pct"] = nav_groups.transform(lambda nav: (nav / nav.cummax() - 1) * 100)
+    else:
+        nav_history["ma_50"] = nav_history["nav"].rolling(window=50).mean()
+        nav_history["ma_200"] = nav_history["nav"].rolling(window=200).mean()
+        nav_history["drawdown_pct"] = (nav_history["nav"] / nav_history["nav"].cummax() - 1) * 100
+
+    return nav_history
+
+
+def calculate_days_to_new_high(nav_history):
+    nav_history = nav_history.sort_values("date").reset_index(drop=True)
+
+    if nav_history.empty:
+        return {
+            "average_days_to_new_high": None,
+            "median_days_to_new_high": None,
+            "longest_days_to_new_high": None,
+            "current_days_since_high": None,
+        }
+
+    peak_nav = nav_history["nav"].iloc[0]
+    peak_date = nav_history["date"].iloc[0]
+    below_peak_start_date = None
+    recovery_days = []
+
+    for _, row in nav_history.iterrows():
+        current_nav = row["nav"]
+        current_date = row["date"]
+
+        if current_nav > peak_nav:
+            if below_peak_start_date is not None:
+                recovery_days.append((current_date - below_peak_start_date).days)
+                below_peak_start_date = None
+
+            peak_nav = current_nav
+            peak_date = current_date
+        elif current_nav < peak_nav and below_peak_start_date is None:
+            below_peak_start_date = current_date
+
+    current_days_since_high = (nav_history["date"].iloc[-1] - peak_date).days
+
+    if not recovery_days:
+        return {
+            "average_days_to_new_high": None,
+            "median_days_to_new_high": None,
+            "longest_days_to_new_high": None,
+            "current_days_since_high": current_days_since_high,
+        }
+
+    recovery_days_series = pd.Series(recovery_days)
+
+    return {
+        "average_days_to_new_high": round(recovery_days_series.mean()),
+        "median_days_to_new_high": round(recovery_days_series.median()),
+        "longest_days_to_new_high": int(recovery_days_series.max()),
+        "current_days_since_high": current_days_since_high,
+    }
+
+
+def calculate_peak_nav_stats(nav_history):
+    nav_history = nav_history.sort_values("date").reset_index(drop=True)
+
+    if nav_history.empty:
+        return {
+            "peak_nav": None,
+            "peak_date": None,
+            "latest_nav": None,
+            "distance_from_peak_pct": None,
+        }
+
+    peak_row = nav_history.loc[nav_history["nav"].idxmax()]
+    latest_row = nav_history.iloc[-1]
+    distance_from_peak_pct = (latest_row["nav"] / peak_row["nav"] - 1) * 100
+
+    return {
+        "peak_nav": float(peak_row["nav"]),
+        "peak_date": peak_row["date"],
+        "latest_nav": float(latest_row["nav"]),
+        "distance_from_peak_pct": float(round(distance_from_peak_pct, 2)),
+    }
+
+
 def detect_nav_anomalies(nav_history):
     nav_history = nav_history.sort_values("date").copy()
     nav_history["previous_nav"] = nav_history["nav"].shift(1)

@@ -34,7 +34,9 @@ def format_indian_currency(value):
     return f"{sign}₹{','.join(indian_groups)},{last_three_digits}"
 
 # Plot NAV over time
-def plot_nav(df):
+def plot_nav(df, selected_indicators=None):
+    selected_indicators = selected_indicators or []
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df['date'],
@@ -43,11 +45,68 @@ def plot_nav(df):
         name='NAV',
         line=dict(color='cyan')
     ))
+
+    indicator_lines = {
+        "50D Moving Average": ("ma_50", "50D MA", "#FFB000"),
+        "200D Moving Average": ("ma_200", "200D MA", "#B15CFF"),
+    }
+
+    for indicator_name, (column_name, trace_name, line_color) in indicator_lines.items():
+        if indicator_name in selected_indicators and column_name in df.columns and df[column_name].notna().any():
+            fig.add_trace(go.Scatter(
+                x=df['date'],
+                y=df[column_name],
+                mode='lines',
+                name=trace_name,
+                line=dict(color=line_color, width=1.8)
+            ))
+
+    if "Peak NAV Marker" in selected_indicators and not df.empty:
+        peak_row = df.loc[df["nav"].idxmax()]
+        fig.add_hline(
+            y=peak_row["nav"],
+            line_dash="dot",
+            line_color="rgba(0, 220, 130, 0.45)",
+            annotation_text="Peak NAV",
+            annotation_position="top left"
+        )
+        fig.add_trace(go.Scatter(
+            x=[peak_row["date"]],
+            y=[peak_row["nav"]],
+            mode="markers+text",
+            name="Peak NAV",
+            marker=dict(color="#00DC82", size=13, symbol="star"),
+            text=["Peak NAV"],
+            textposition="top center"
+        ))
+
     fig.update_layout(
         title='📈 NAV Over Time',
         xaxis_title='Date',
         yaxis_title='NAV',
         template='plotly_dark'
+    )
+    return fig
+
+
+def plot_drawdown(df):
+    fig = go.Figure()
+
+    if "drawdown_pct" in df.columns and df["drawdown_pct"].notna().any():
+        fig.add_trace(go.Scatter(
+            x=df["date"],
+            y=df["drawdown_pct"],
+            mode="lines",
+            name="Drawdown",
+            fill="tozeroy",
+            line=dict(color="#FF5C5C")
+        ))
+
+    fig.update_layout(
+        title="📉 Drawdown",
+        xaxis_title="Date",
+        yaxis_title="Drawdown (%)",
+        template="plotly_dark"
     )
     return fig
 

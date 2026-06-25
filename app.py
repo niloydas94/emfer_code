@@ -12,7 +12,7 @@ try:
 except ImportError:
     EncryptedCookieManager = None
 
-from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history, clean_nav_history, detect_nav_anomalies
+from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history, clean_nav_history, add_nav_indicators, detect_nav_anomalies
 from src.emfer.data.rolling_returns import calculate_rolling_returns, get_nearest_past_index, clean_fund_name
 from src.emfer.charts.charts import plot_nav, plot_rolling_cagr_mul_mf, rolling_returns_summary, plot_boxplot
 from src.emfer.genAI.fund_store import create_fund_store, build_rag_context
@@ -579,10 +579,10 @@ def home_page():
     schemes_unique = st.session_state.schemes.drop_duplicates(subset="schemeName")
 
     st.session_state.selected_funds = st.multiselect(
-        "Select Mutual Fund(s)",
+        "Choose one or more funds to compare",
         options=schemes_unique["schemeName"].sort_values().tolist(),
         default=st.session_state.selected_funds,
-        placeholder="Start typing fund name...",
+        placeholder="Add peer funds for a more apples-to-apples comparison...",
         key="selected_funds_input"
     )
 
@@ -620,6 +620,7 @@ def home_page():
                 #Creating historical NAV history and rolling returns data for each selected fund and appending to session state variables
                 st.session_state.nav_history, tmp = fetch_nav_history(row["schemeCode"])
                 st.session_state.nav_history, nav_quality_info = clean_nav_history(st.session_state.nav_history)
+                st.session_state.nav_history = add_nav_indicators(st.session_state.nav_history)
 
                 if nav_quality_info["trimmed_start_rows"] > 0 or nav_quality_info["removed_later_rows"] > 0:
                     st.session_state.nav_quality_warnings.append({
