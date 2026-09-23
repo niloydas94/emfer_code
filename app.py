@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 
 try:
     from streamlit_cookies_manager import EncryptedCookieManager
-except ImportError:
+except (ImportError, AttributeError):
     EncryptedCookieManager = None
 
 from src.emfer.data.mf_api import get_all_schemes, fetch_nav_history, clean_nav_history, add_nav_indicators, detect_nav_anomalies
